@@ -3,7 +3,11 @@ name = "wordplay"
 version = "0.1.0"
 authors = ["Christopher Speck <die.drachen@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+build = "build/build.rs"
 
 [dependencies]
+
+[build-dependencies]
+phf = { git = "https://github.com/neandrake/rust-phf", branch = "fmtconst-string" }
+phf_codegen = { git = "https://github.com/neandrake/rust-phf", branch = "fmtconst-string" }
+itertools = "0.9"
