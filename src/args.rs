@@ -19,7 +19,7 @@ pub enum Command {
     Beehive {
         /// The single letter required to be in each word.
         queen: char,
-       /// The six other letters that can be used to make words.
+        /// The six other letters that can be used to make words.
         workers: String,
     },
 }
