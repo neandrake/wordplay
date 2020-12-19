@@ -29,7 +29,8 @@ fn main() {
     }
 
     for (key, list) in map {
-        let value = format!("vec!{:?}", list);
+        let words = list.iter().sorted().dedup().join(" ");
+        let value = format!("\"{}\"", words);
         phfmap.entry(key, &value);
     }
 
@@ -42,7 +43,14 @@ fn main() {
 
 use phf::Map;
 
-pub static WORDS_BY_MAKEUP: Map<String, Vec<String>> = {}",
+/// A map of words keyed by the letters that make up those words.
+/// The letters in each key are sorted and unique, for example:
+/// `ablno -> balloon`
+/// The values of this map are a single string of words separated by
+/// whitespace. This is due to the limitation that static maps cannot
+/// use values of varying size at compile-time (i.e. `Vec`). The words
+/// in keys appear in alphabetical order.
+pub static WORDS_BY_LETTERS_USED: Map<&'static str, &'static str> = {};",
         phfmap.build())
         .expect("Error saving word-map file");
 }

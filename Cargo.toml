@@ -6,6 +6,10 @@ edition = "2018"
 build = "build/build.rs"
 
 [dependencies]
+anyhow = "1.0"
+itertools = "0.9"
+phf = { git = "https://github.com/neandrake/rust-phf", branch = "fmtconst-string" }
+structopt = "0.3"
 
 [build-dependencies]
 phf = { git = "https://github.com/neandrake/rust-phf", branch = "fmtconst-string" }
