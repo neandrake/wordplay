@@ -41,71 +41,60 @@ impl BeehiveApp {
         BeehiveApp { queen, workers }
     }
 
-    /// Compute all combinations of letters from the queen + workers.
-    /// Using the "Shifting Algorithm" from
-    /// https://hmkcode.com/calculate-find-all-possible-combinations-of-an-array-using-java/
-    fn key_combinations(&self) -> Vec<String> {
+    /// Compute all k-combinations of the workers letters along with the queen.
+    /// See: https://stackoverflow.com/a/29914908/4538652
+    fn k_combinations(&self) -> Vec<String> {
         let mut combinations: Vec<String> = vec![];
-        for k in 0..self.workers.len() {
-            let mut ignore = vec![0usize; self.workers.len() - k];
-            for w in 0..ignore.capacity() {
-                ignore[w] = self.workers.len() - k + (w + 1);
-            }
-
-            let mut combination = vec![0usize; k];
-
-            let mut i = 0;
-            let mut r = 0;
-            let mut g = 0;
-
-            let mut terminate = false;
-            while !terminate {
-                while i < self.workers.len() && r < k {
-                    if i != ignore[g] {
-                        combination[r] = i;
-                        r += 1;
-                        i += 1;
-                    } else {
-                        if g != ignore.len() - 1 {
-                            g += 1;
-                        }
+        for k in 1..=self.workers.len() {
+            let mut s = vec![0usize; k];
+            
+            if k <= self.workers.len() {
+                for i in 0..s.len() {
+                    s[i] = i;
+                }
+                let word = self.build_word(&s);
+                if !combinations.contains(&word) {
+                    combinations.push(word);
+                }
+                loop {
+                    let mut i: isize = (k as isize) - 1;
+                    while i >= 0 && s[i as usize] == self.workers.len() - k + (i as usize) {
+                        i -= 1;
+                    }
+                    if i < 0 {
+                        break;
+                    }
+                    s[i as usize] += 1;
+                    i += 1;
+                    while (i as usize) < k {
+                        s[i as usize] = s[(i as usize) - 1] + 1;
                         i += 1;
                     }
-                }
-                // Add new combination based on indices in combination
-                let mut this_combination: String = String::new();
-                for ri in 0..r {
-                    this_combination.push(self.workers.as_bytes()[combination[ri]] as char);
-                }
-                let this_combination = once(self.queen).chain(this_combination.chars()).sorted().collect::<String>();
-                combinations.push(this_combination);
-
-                i = 0;
-                r = 0;
-                g = 0;
-                terminate = true;
-
-                for w in 0..ignore.len() {
-                    if ignore[w] > w {
-                        ignore[w] -= 1;
-                        if w > 0 {
-                            ignore[w-1] = ignore[w]-1;
-                        }
-                        terminate = false;
-                        break;
+                    let word = self.build_word(&s);
+                    if !combinations.contains(&word) {
+                        combinations.push(word);
                     }
                 }
             }
         }
         combinations
     }
+
+    /// Builds a word from the given list of indices. The returned word will
+    /// include the queen letter, and the word will have its letters ordered.
+    fn build_word(&self, subset: &Vec<usize>) -> String {
+        let bytes = self.workers.as_bytes();
+        once(self.queen)
+            .chain(subset.iter().map(|i| bytes[*i] as char))
+            .sorted()
+            .dedup()
+            .collect::<String>()
+    }
 }
 
 impl App for BeehiveApp {
     fn run(&mut self) -> Result<()> {
-        let answers = self.key_combinations().into_iter()
-            .sorted()
-            .dedup()
+        let answers = self.k_combinations().into_iter()
             .filter_map(|key| WORDS_BY_LETTERS_USED.get(&*key))
             .flat_map(|answers| answers.split_whitespace())
             .filter(|answer| answer.len() > 3)
@@ -114,6 +103,8 @@ impl App for BeehiveApp {
             .dedup()
             .collect::<Vec<String>>();
 
+        // Grab the stdout lock and write directly to it instead of using
+        // println, which will be more performant if there are lots of words
         let stdout = io::stdout();
         let mut stdout = stdout.lock();
         for answer in answers {
